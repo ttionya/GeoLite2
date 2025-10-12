@@ -142,6 +142,7 @@ jobs:
       -
         name: Save last-modified time to cache
         run: |
+          mkdir -p "$(dirname "${CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN}")"
           echo "${{ needs.check-update.outputs.last-modified-geolite-asn }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN}"
           echo "${{ needs.check-update.outputs.last-modified-geolite-city }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_CITY}"
           echo "${{ needs.check-update.outputs.last-modified-geolite-country }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY}"
