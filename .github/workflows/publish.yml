@@ -35,7 +35,6 @@ jobs:
     steps:
       -
         name: Restore last-modified time from cache
-        id: cached
         uses: actions/cache@v4
         with:
           path: ~/.cache/geolite-last-modified
@@ -112,13 +111,6 @@ jobs:
           chmod -R 777 ~/geolite-download ~/geolite-elasticsearch
           echo "TODAY=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
       -
-        name: Restore cached last-modified time
-        id: cached
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/geolite-last-modified
-          key: geolite-last-modified
-      -
         name: Set up Docker
         uses: docker/setup-docker-action@v4
       -
@@ -137,7 +129,7 @@ jobs:
         name: Push to "elasticsearch" branch
         run: |
           cd ~/geolite-elasticsearch
-          docker run -it --rm --mount type=bind,source=$(pwd),target=/geoip docker.elastic.co/elasticsearch/elasticsearch:9.1.5 ./bin/elasticsearch-geoip -s /geoip
+          docker run --rm --mount type=bind,source=$(pwd),target=/geoip docker.elastic.co/elasticsearch/elasticsearch:9.1.5 ./bin/elasticsearch-geoip -s /geoip
           rm -f *.mmdb
           git init
           git config user.name "${{ github.actor }}"
@@ -153,3 +145,9 @@ jobs:
           echo "${{ needs.check-update.outputs.last-modified-geolite-asn }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN}"
           echo "${{ needs.check-update.outputs.last-modified-geolite-city }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_CITY}"
           echo "${{ needs.check-update.outputs.last-modified-geolite-country }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY}"
+      -
+        name: Save last-modified time to cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/geolite-last-modified
+          key: geolite-last-modified
