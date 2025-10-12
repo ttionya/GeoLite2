@@ -16,9 +16,9 @@ env:
   URL_GEOLITE_ASN: "https://download.maxmind.com/geoip/databases/GeoLite2-ASN/download?suffix=tar.gz"
   URL_GEOLITE_CITY: "https://download.maxmind.com/geoip/databases/GeoLite2-City/download?suffix=tar.gz"
   URL_GEOLITE_COUNTRY: "https://download.maxmind.com/geoip/databases/GeoLite2-Country/download?suffix=tar.gz"
-  CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN: ~/.cache/geolite-last-modified/GeoLite2-ASN
-  CACHE_FILE_LAST_MODIFIED_GEOLITE_CITY: ~/.cache/geolite-last-modified/GeoLite2-City
-  CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY: ~/.cache/geolite-last-modified/GeoLite2-Country
+  CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN: /tmp/geolite-last-modified/GeoLite2-ASN
+  CACHE_FILE_LAST_MODIFIED_GEOLITE_CITY: /tmp/geolite-last-modified/GeoLite2-City
+  CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY: /tmp/geolite-last-modified/GeoLite2-Country
 
 jobs:
   check-update:
@@ -35,9 +35,9 @@ jobs:
     steps:
       -
         name: Restore last-modified time from cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.cache/geolite-last-modified
+          path: /tmp/geolite-last-modified
           key: geolite-last-modified
       -
         name: Check for updates
@@ -148,7 +148,7 @@ jobs:
           echo "${{ needs.check-update.outputs.last-modified-geolite-country }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY}"
       -
         name: Save last-modified time to cache
-        uses: actions/cache@v4
+        uses: actions/cache/save@v4
         with:
-          path: ~/.cache/geolite-last-modified
+          path: /tmp/geolite-last-modified
           key: geolite-last-modified
