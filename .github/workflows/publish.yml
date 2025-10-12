@@ -1,0 +1,142 @@
+name: 'Publish GeoLite2 Databases'
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 1 * * *
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  URL_GEOLITE_ASN: "https://download.maxmind.com/geoip/databases/GeoLite2-ASN/download?suffix=tar.gz"
+  URL_GEOLITE_CITY: "https://download.maxmind.com/geoip/databases/GeoLite2-City/download?suffix=tar.gz"
+  URL_GEOLITE_COUNTRY: "https://download.maxmind.com/geoip/databases/GeoLite2-Country/download?suffix=tar.gz"
+  CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN: ~/.cache/geolite-last-modified/GeoLite2-ASN
+  CACHE_FILE_LAST_MODIFIED_GEOLITE_CITY: ~/.cache/geolite-last-modified/GeoLite2-City
+  CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY: ~/.cache/geolite-last-modified/GeoLite2-Country
+
+jobs:
+  check-update:
+    name: Check for updates
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      need-update: ${{ steps.check.outputs.need-update }}
+      last-modified-geolite-asn: ${{ steps.check.outputs.last-modified-geolite-asn }}
+      last-modified-geolite-city: ${{ steps.check.outputs.last-modified-geolite-city }}
+      last-modified-geolite-country: ${{ steps.check.outputs.last-modified-geolite-country }}
+
+    steps:
+      -
+        name: Restore cached last-modified time
+        id: cached
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/geolite-last-modified
+          key: geolite-last-modified
+      -
+        name: Check for updates
+        id: check
+        run: |
+          LAST_MODIFIED_GEOLITE_ASN="$(curl -sI -u "${{ secrets.MAXMIND_ACCOUNT_ID }}:${{ secrets.MAXMIND_LICENSE_KEY }}" "${URL_GEOLITE_ASN}" | grep -i '^last-modified:' | sed 's/last-modified: //I' | tr -d '[:cntrl:]')"
+          LAST_MODIFIED_GEOLITE_CITY="$(curl -sI -u "${{ secrets.MAXMIND_ACCOUNT_ID }}:${{ secrets.MAXMIND_LICENSE_KEY }}" "${URL_GEOLITE_CITY}" | grep -i '^last-modified:' | sed 's/last-modified: //I' | tr -d '[:cntrl:]')"
+          LAST_MODIFIED_GEOLITE_COUNTRY="$(curl -sI -u "${{ secrets.MAXMIND_ACCOUNT_ID }}:${{ secrets.MAXMIND_LICENSE_KEY }}" "${URL_GEOLITE_COUNTRY}" | grep -i '^last-modified:' | sed 's/last-modified: //I' | tr -d '[:cntrl:]')"
+
+          echo "LAST_MODIFIED_GEOLITE_ASN: ${LAST_MODIFIED_GEOLITE_ASN}"
+          echo "LAST_MODIFIED_GEOLITE_CITY: ${LAST_MODIFIED_GEOLITE_CITY}"
+          echo "LAST_MODIFIED_GEOLITE_COUNTRY: ${LAST_MODIFIED_GEOLITE_COUNTRY}"
+
+          function check_database() {
+            local CACHE_FILE="$1"
+            local LAST_MODIFIED="$2"
+            local DATABASE_NAME="$(basename "${CACHE_FILE}")"
+
+            if [[ ! -f "${CACHE_FILE}" ]]; then
+              echo "Cache file '${DATABASE_NAME}' not found"
+              return 0
+            else
+              local CACHED_LAST_MODIFIED="$(cat "${CACHE_FILE}")"
+              echo "Cached ${DATABASE_NAME}: ${CACHED_LAST_MODIFIED}"
+              if [[ "${CACHED_LAST_MODIFIED}" != "${LAST_MODIFIED}" ]]; then
+                echo "${DATABASE_NAME} needs update"
+                return 0
+              else
+                echo "${DATABASE_NAME} is up to update"
+                return 1
+              fi
+            fi
+          }
+
+          if check_database "${CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN}" "${LAST_MODIFIED_GEOLITE_ASN}"; then
+            NEED_UPDATE=true
+          fi
+          if check_database "${CACHE_FILE_LAST_MODIFIED_GEOLITE_CITY}" "${LAST_MODIFIED_GEOLITE_CITY}"; then
+            NEED_UPDATE=true
+          fi
+          if check_database "${CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY}" "${LAST_MODIFIED_GEOLITE_COUNTRY}"; then
+            NEED_UPDATE=true
+          fi
+
+          echo "NEED_UPDATE: ${NEED_UPDATE}"
+
+          echo "need-update=${NEED_UPDATE:-false}" >> $GITHUB_OUTPUT
+          echo "last-modified-geolite-asn=${LAST_MODIFIED_GEOLITE_ASN}" >> $GITHUB_OUTPUT
+          echo "last-modified-geolite-city=${LAST_MODIFIED_GEOLITE_CITY}" >> $GITHUB_OUTPUT
+          echo "last-modified-geolite-country=${LAST_MODIFIED_GEOLITE_COUNTRY}" >> $GITHUB_OUTPUT
+
+  publish:
+    name: Publish
+
+    runs-on: ubuntu-latest
+
+    needs: check-update
+
+    if: needs.check-update.outputs.need-update == 'true'
+
+    steps:
+      -
+        name: Download GeoLite.mmdb
+        run: |
+          wget --user "${{ secrets.MAXMIND_ACCOUNT_ID }}" --password "${{ secrets.MAXMIND_LICENSE_KEY }}" -nv -O- "${URL_GEOLITE_ASN}" | tar zxv
+          wget --user "${{ secrets.MAXMIND_ACCOUNT_ID }}" --password "${{ secrets.MAXMIND_LICENSE_KEY }}" -nv -O- "${URL_GEOLITE_CITY}" | tar zxv
+          wget --user "${{ secrets.MAXMIND_ACCOUNT_ID }}" --password "${{ secrets.MAXMIND_LICENSE_KEY }}" -nv -O- "${URL_GEOLITE_COUNTRY}" | tar zxv
+          mkdir -p ~/geolite-download ~/geolite-elasticsearch
+          cp -v GeoLite*/*.mmdb ~/geolite-download
+          cp -v GeoLite*/*.mmdb ~/geolite-elasticsearch
+          chmod -R 777 ~/geolite-download ~/geolite-elasticsearch
+          echo "TODAY=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
+      -
+        name: Set up Docker
+        uses: docker/setup-docker-action@v4
+      -
+        name: Push to "download" branch
+        run: |
+          cd ~/geolite-download
+          git init
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git checkout -b download
+          git add .
+          git commit -m "${{ env.TODAY }}"
+          git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git push -f origin download
+      -
+        name: Push to "elasticsearch" branch
+        run: |
+          cd ~/geolite-elasticsearch
+          docker run -it --rm --mount type=bind,source=$(pwd),target=/geoip docker.elastic.co/elasticsearch/elasticsearch:9.1.5 ./bin/elasticsearch-geoip -s /geoip
+          rm -f *.mmdb
+          git init
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git checkout -b elasticsearch
+          git add .
+          git commit -m "${{ env.TODAY }}"
+          git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git push -f origin elasticsearch
