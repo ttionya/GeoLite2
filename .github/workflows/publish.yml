@@ -34,7 +34,7 @@ jobs:
 
     steps:
       -
-        name: Restore cached last-modified time
+        name: Restore last-modified time from cache
         id: cached
         uses: actions/cache@v4
         with:
@@ -112,6 +112,13 @@ jobs:
           chmod -R 777 ~/geolite-download ~/geolite-elasticsearch
           echo "TODAY=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
       -
+        name: Restore cached last-modified time
+        id: cached
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/geolite-last-modified
+          key: geolite-last-modified
+      -
         name: Set up Docker
         uses: docker/setup-docker-action@v4
       -
@@ -140,3 +147,9 @@ jobs:
           git commit -m "${{ env.TODAY }}"
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f origin elasticsearch
+      -
+        name: Save last-modified time to cache
+        run: |
+          echo "${{ needs.check-update.outputs.last-modified-geolite-asn }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN}"
+          echo "${{ needs.check-update.outputs.last-modified-geolite-city }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_CITY}"
+          echo "${{ needs.check-update.outputs.last-modified-geolite-country }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY}"
