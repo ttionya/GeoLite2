@@ -72,6 +72,7 @@ jobs:
             fi
           }
 
+          NEED_UPDATE=false
           if check_database "${CACHE_FILE_LAST_MODIFIED_GEOLITE_ASN}" "${LAST_MODIFIED_GEOLITE_ASN}"; then
             NEED_UPDATE=true
           fi
@@ -84,7 +85,7 @@ jobs:
 
           echo "NEED_UPDATE: ${NEED_UPDATE}"
 
-          echo "need-update=${NEED_UPDATE:-false}" >> $GITHUB_OUTPUT
+          echo "need-update=${NEED_UPDATE}" >> $GITHUB_OUTPUT
           echo "last-modified-geolite-asn=${LAST_MODIFIED_GEOLITE_ASN}" >> $GITHUB_OUTPUT
           echo "last-modified-geolite-city=${LAST_MODIFIED_GEOLITE_CITY}" >> $GITHUB_OUTPUT
           echo "last-modified-geolite-country=${LAST_MODIFIED_GEOLITE_COUNTRY}" >> $GITHUB_OUTPUT
