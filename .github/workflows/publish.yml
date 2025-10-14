@@ -39,7 +39,7 @@ jobs:
         with:
           path: /tmp/geolite-last-modified
           key: geolite-last-modified-${{ github.run_id }}
-          restore-keys: geolite-last-modified
+          restore-keys: geolite-last-modified-
       -
         name: Check for updates
         id: check
