@@ -38,7 +38,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /tmp/geolite-last-modified
-          key: geolite-last-modified
+          key: geolite-last-modified-${{ github.run_id }}
+          restore-keys: geolite-last-modified
       -
         name: Check for updates
         id: check
@@ -152,4 +153,4 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: /tmp/geolite-last-modified
-          key: geolite-last-modified
+          key: geolite-last-modified-${{ github.run_id }}
