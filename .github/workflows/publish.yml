@@ -35,7 +35,7 @@ jobs:
     steps:
       -
         name: Restore last-modified time from cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: /tmp/geolite-last-modified
           key: geolite-last-modified-${{ github.run_id }}
@@ -150,7 +150,7 @@ jobs:
           echo "${{ needs.check-update.outputs.last-modified-geolite-country }}" > "${CACHE_FILE_LAST_MODIFIED_GEOLITE_COUNTRY}"
       -
         name: Save last-modified time to cache
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: /tmp/geolite-last-modified
           key: geolite-last-modified-${{ github.run_id }}
