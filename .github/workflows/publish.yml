@@ -114,7 +114,7 @@ jobs:
           echo "TODAY=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
       -
         name: Set up Docker
-        uses: docker/setup-docker-action@v4
+        uses: docker/setup-docker-action@v5
       -
         name: Push to "download" branch
         run: |
