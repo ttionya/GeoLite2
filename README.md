@@ -8,15 +8,15 @@
 
 #### URL1
 
-- [GeoLite2-ASN.mmdb](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-ASN.mmdb)
-- [GeoLite2-City.mmdb](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-City.mmdb)
-- [GeoLite2-Country.mmdb](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-Country.mmdb)
+- [GeoLite2-ASN.mmdb](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-ASN.mmdb) - [sha256](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-ASN.mmdb.sha256)
+- [GeoLite2-City.mmdb](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-City.mmdb) - [sha256](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-City.mmdb.sha256)
+- [GeoLite2-Country.mmdb](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-Country.mmdb) - [sha256](https://github.com/ttionya/GeoLite2/raw/download/GeoLite2-Country.mmdb.sha256)
 
 #### URL2
 
-- [GeoLite2-ASN.mmdb](https://api.ttionya.com/geolite2/download/GeoLite2-ASN.mmdb)
-- [GeoLite2-City.mmdb](https://api.ttionya.com/geolite2/download/GeoLite2-City.mmdb)
-- [GeoLite2-Country.mmdb](https://api.ttionya.com/geolite2/download/GeoLite2-Country.mmdb)
+- [GeoLite2-ASN.mmdb](https://api.ttionya.com/geolite2/download/GeoLite2-ASN.mmdb) - [sha256](https://api.ttionya.com/geolite2/download/GeoLite2-ASN.mmdb.sha256)
+- [GeoLite2-City.mmdb](https://api.ttionya.com/geolite2/download/GeoLite2-City.mmdb) - [sha256](https://api.ttionya.com/geolite2/download/GeoLite2-City.mmdb.sha256)
+- [GeoLite2-Country.mmdb](https://api.ttionya.com/geolite2/download/GeoLite2-Country.mmdb) - [sha256](https://api.ttionya.com/geolite2/download/GeoLite2-Country.mmdb.sha256)
 
 ### GeoLite2 databases for Elasticsearch
 
