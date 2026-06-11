@@ -104,9 +104,32 @@ jobs:
       -
         name: Download GeoLite.mmdb
         run: |
-          wget --user "${{ secrets.MAXMIND_ACCOUNT_ID }}" --password "${{ secrets.MAXMIND_LICENSE_KEY }}" -nv -O- "${URL_GEOLITE_ASN}" | tar zxv
-          wget --user "${{ secrets.MAXMIND_ACCOUNT_ID }}" --password "${{ secrets.MAXMIND_LICENSE_KEY }}" -nv -O- "${URL_GEOLITE_CITY}" | tar zxv
-          wget --user "${{ secrets.MAXMIND_ACCOUNT_ID }}" --password "${{ secrets.MAXMIND_LICENSE_KEY }}" -nv -O- "${URL_GEOLITE_COUNTRY}" | tar zxv
+          set -euo pipefail
+
+          function download_verify_extract() {
+            local PREFIX="$1"
+            local URL="$2"
+            local FILE_SHA256="${PREFIX}.tar.gz.sha256"
+
+            echo "Downloading ${PREFIX} sha256..."
+            wget --user "${{ secrets.MAXMIND_ACCOUNT_ID }}" --password "${{ secrets.MAXMIND_LICENSE_KEY }}" -nv -O "${FILE_SHA256}" "${URL}.sha256"
+
+            local FILE_ARCHIVE="$(awk '{print $2}' "${FILE_SHA256}")"
+
+            echo "Downloading ${PREFIX} database..."
+            wget --user "${{ secrets.MAXMIND_ACCOUNT_ID }}" --password "${{ secrets.MAXMIND_LICENSE_KEY }}" -nv -O "${FILE_ARCHIVE}" "${URL}"
+
+            echo "Verifying ${PREFIX} database..."
+            sha256sum -c "${FILE_SHA256}"
+
+            echo "Extracting ${PREFIX} database..."
+            tar -zxvf "${FILE_ARCHIVE}"
+          }
+
+          download_verify_extract "GeoLite2-ASN" "${URL_GEOLITE_ASN}"
+          download_verify_extract "GeoLite2-City" "${URL_GEOLITE_CITY}"
+          download_verify_extract "GeoLite2-Country" "${URL_GEOLITE_COUNTRY}"
+
           mkdir -p ~/geolite-download ~/geolite-elasticsearch
           cp -v GeoLite*/*.mmdb ~/geolite-download
           cp -v GeoLite*/*.mmdb ~/geolite-elasticsearch
@@ -119,6 +142,9 @@ jobs:
         name: Push to "download" branch
         run: |
           cd ~/geolite-download
+          for FILE in *.mmdb; do
+            sha256sum "${FILE}" > "${FILE}.sha256"
+          done
           git init
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
